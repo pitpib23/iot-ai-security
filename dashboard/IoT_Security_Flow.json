@@ -1,0 +1,536 @@
+[
+    {
+        "id": "1e491814b204b30f",
+        "type": "tab",
+        "label": "Flow 2",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "9acf9a048a1b2594",
+        "type": "mqtt in",
+        "z": "1e491814b204b30f",
+        "name": "Security Feed",
+        "topic": "security/alert",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "local_broker",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 530,
+        "y": 520,
+        "wires": [
+            [
+                "ab87ddc9e740dc15",
+                "78e5bbb983ee2d6f"
+            ]
+        ]
+    },
+    {
+        "id": "ab87ddc9e740dc15",
+        "type": "function",
+        "z": "1e491814b204b30f",
+        "name": "Process & Route Data",
+        "func": "const data = msg.payload;\nconst status = data.status;\n\n// Get or initialize stats\nlet stats = flow.get('stats') || {\n    total: 0,\n    normal: 0,\n    anomaly: 0,\n    clients: {}\n};\n\n// Update counters\nstats.total++;\nif (status === 'normal') {\n    stats.normal++;\n} else if (status === 'anomaly') {\n    stats.anomaly++;\n}\n\n// Track by client\nconst client = data.client || 'unknown';\nif (!stats.clients[client]) {\n    stats.clients[client] = { normal: 0, anomaly: 0 };\n}\nstats.clients[client][status]++;\n\n// Save stats\nflow.set('stats', stats);\n\n// Calculate anomaly rate\nconst anomalyRate = stats.total > 0 ? (stats.anomaly / stats.total * 100).toFixed(1) : 0;\n\n// Return multiple outputs\nreturn [\n    { payload: stats.total },                       // 1. Total count\n    { payload: stats.normal },                      // 2. Normal count\n    { payload: stats.anomaly },                     // 3. Anomaly count\n    { payload: parseFloat(anomalyRate) },           // 4. Anomaly rate\n    { payload: stats.normal, topic: \"Normal\" },     // 5. Pie chart normal\n    { payload: stats.anomaly, topic: \"Anomaly\" },   // 6. Pie chart anomaly\n    { payload: stats.normal, topic: \"Normal\" },     // 7. Line chart normal\n    { payload: stats.anomaly, topic: \"Anomaly\" },   // 8. Line chart anomaly\n    { payload: stats },                             // 9. Full stats for threats\n    status === 'anomaly' ? msg : null               // 10. Alerts only\n];",
+        "outputs": 10,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 750,
+        "y": 520,
+        "wires": [
+            [
+                "d7ec02fa7eea46f2"
+            ],
+            [
+                "8ec57c2b4be89ba9"
+            ],
+            [
+                "3aa15992ad40c7a4"
+            ],
+            [
+                "123ef123d46491e6"
+            ],
+            [
+                "610ba1362996a594",
+                "6ae1ac21505ca4af"
+            ],
+            [
+                "610ba1362996a594",
+                "6ae1ac21505ca4af"
+            ],
+            [
+                "00ec137a088c45e8",
+                "b62101b45c08f645"
+            ],
+            [
+                "00ec137a088c45e8",
+                "b62101b45c08f645"
+            ],
+            [
+                "c788d88e1b8a2a55"
+            ],
+            [
+                "0c170e5fad7540ec"
+            ]
+        ]
+    },
+    {
+        "id": "d7ec02fa7eea46f2",
+        "type": "ui_text",
+        "z": "1e491814b204b30f",
+        "group": "group_stats",
+        "order": 1,
+        "width": 2,
+        "height": 2,
+        "name": "Total Count",
+        "label": "Total",
+        "format": "<font size=6><b>{{msg.payload}}</b></font>",
+        "layout": "col-center",
+        "className": "",
+        "x": 1010,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "8ec57c2b4be89ba9",
+        "type": "ui_text",
+        "z": "1e491814b204b30f",
+        "group": "group_stats",
+        "order": 2,
+        "width": 2,
+        "height": 2,
+        "name": "Normal Count",
+        "label": "Normal",
+        "format": "<font size=6 color='#4caf50'><b>{{msg.payload}}</b></font>",
+        "layout": "col-center",
+        "className": "",
+        "x": 1020,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "3aa15992ad40c7a4",
+        "type": "ui_text",
+        "z": "1e491814b204b30f",
+        "group": "group_stats",
+        "order": 3,
+        "width": 2,
+        "height": 2,
+        "name": "Anomaly Count",
+        "label": "Anomaly",
+        "format": "<font size=6 color='#f44336'><b>{{msg.payload}}</b></font>",
+        "layout": "col-center",
+        "className": "",
+        "x": 1030,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "123ef123d46491e6",
+        "type": "ui_gauge",
+        "z": "1e491814b204b30f",
+        "name": "Anomaly Rate",
+        "group": "group_stats",
+        "order": 4,
+        "width": 6,
+        "height": 4,
+        "gtype": "gage",
+        "title": "Anomaly Rate",
+        "label": "%",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#4caf50",
+            "#ffeb3b",
+            "#f44336"
+        ],
+        "seg1": "15",
+        "seg2": "35",
+        "className": "",
+        "x": 1030,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "610ba1362996a594",
+        "type": "ui_chart",
+        "z": "1e491814b204b30f",
+        "name": "Status Pie Chart",
+        "group": "group_analysis",
+        "order": 1,
+        "width": "6",
+        "height": "1",
+        "label": "Status Distribution",
+        "chartType": "pie",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "No data yet",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "86400",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#4caf50",
+            "#f44336",
+            "#1f77b4",
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 1030,
+        "y": 480,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "6ae1ac21505ca4af",
+        "type": "ui_template",
+        "z": "1e491814b204b30f",
+        "group": "group_analysis",
+        "name": "Pie Chart Template",
+        "order": 1,
+        "width": "6",
+        "height": "5",
+        "format": "<canvas id=\"pieChart\" style=\"height:280px\"></canvas>\n\n<script src=\"https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js\"></script>\n\n<script>\n(function(scope) {\n    const ctx = document.getElementById('pieChart');\n    \n    const chart = new Chart(ctx, {\n        type: 'pie',\n        data: {\n            labels: ['Normal', 'Anomaly'],\n            datasets: [{\n                data: [0, 0],\n                backgroundColor: ['#4caf50', '#f44336'],\n                borderColor: ['#2a2a2a', '#2a2a2a'],\n                borderWidth: 3\n            }]\n        },\n        options: {\n            responsive: true,\n            maintainAspectRatio: false,\n            plugins: {\n                legend: {\n                    position: 'bottom',\n                    labels: {\n                        color: '#ffffff',\n                        font: { size: 14 },\n                        padding: 15\n                    }\n                },\n                tooltip: {\n                    callbacks: {\n                        label: function(context) {\n                            const label = context.label || '';\n                            const value = context.parsed || 0;\n                            const total = context.dataset.data.reduce((a, b) => a + b, 0);\n                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;\n                            return label + ': ' + value + ' (' + percentage + '%)';\n                        }\n                    }\n                }\n            }\n        }\n    });\n    \n    let normalCount = 0;\n    let anomalyCount = 0;\n    \n    scope.$watch('msg', function(msg) {\n        if (msg && msg.payload !== undefined) {\n            if (msg.topic === 'Normal') {\n                normalCount = msg.payload;\n            } else if (msg.topic === 'Anomaly') {\n                anomalyCount = msg.payload;\n            }\n            \n            chart.data.datasets[0].data = [normalCount, anomalyCount];\n            chart.update();\n        }\n    });\n})(scope);\n</script>",
+        "storeOutMessages": false,
+        "fwdInMessages": false,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 1040,
+        "y": 520,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "00ec137a088c45e8",
+        "type": "ui_chart",
+        "z": "1e491814b204b30f",
+        "name": "Trend Line Chart",
+        "group": "group_analysis",
+        "order": 2,
+        "width": 6,
+        "height": "1",
+        "label": "Detection Trend",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "No data yet",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "30",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#4caf50",
+            "#f44336",
+            "#1f77b4",
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 1030,
+        "y": 560,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b62101b45c08f645",
+        "type": "ui_template",
+        "z": "1e491814b204b30f",
+        "group": "group_analysis",
+        "name": "Line Chart Template",
+        "order": 2,
+        "width": 6,
+        "height": 4,
+        "format": "<canvas id=\"histChart\" style=\"height:280px\"></canvas>\n\n<script src=\"https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js\"></script>\n\n<script>\n(function(scope) {\n\n    const ctx = document.getElementById('histChart');\n\n    const chart = new Chart(ctx, {\n        type: 'bar',\n        data: {\n            labels: [],\n            datasets: [{\n                label: 'Anomalies per 10 min',\n                data: [],\n                backgroundColor: '#f44336'\n            }]\n        },\n        options: {\n            responsive: true,\n            maintainAspectRatio: false,\n            scales: {\n                x: {\n                    ticks: { color: '#ffffff' },\n                    grid: { color: '#333333' }\n                },\n                y: {\n                    beginAtZero: true,\n                    ticks: { color: '#ffffff', stepSize: 1 },\n                    grid: { color: '#333333' }\n                }\n            },\n            plugins: {\n                legend: {\n                    labels: { color: '#ffffff' }\n                }\n            }\n        }\n    });\n\n    // ===== Histogram logic =====\n    const BUCKET_MS = 10 * 60 * 1000; // 10 minutes\n    const WINDOW_MS = 2 * 60 * 60 * 1000; // keep 2 hours\n\n    // buckets: { bucketStartTs: count }\n    let buckets = {};\n\n    function bucketLabel(ts) {\n        const d = new Date(ts);\n        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });\n    }\n\n    scope.$watch('msg', function(msg) {\n        if (!msg || msg.topic !== 'Anomaly') return;\n\n        const now = Date.now();\n        const bucketStart = Math.floor(now / BUCKET_MS) * BUCKET_MS;\n\n        // increment anomaly count\n        buckets[bucketStart] = (buckets[bucketStart] || 0) + 1;\n\n        // remove old buckets\n        Object.keys(buckets).forEach(ts => {\n            if (now - ts > WINDOW_MS) delete buckets[ts];\n        });\n\n        // rebuild chart data (sorted by time)\n        const sorted = Object.keys(buckets)\n            .map(Number)\n            .sort((a, b) => a - b);\n\n        chart.data.labels = sorted.map(ts => bucketLabel(ts));\n        chart.data.datasets[0].data = sorted.map(ts => buckets[ts]);\n\n        chart.update('none');\n    });\n\n})(scope);\n</script>\n",
+        "storeOutMessages": false,
+        "fwdInMessages": false,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 1040,
+        "y": 600,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "0c170e5fad7540ec",
+        "type": "ui_template",
+        "z": "1e491814b204b30f",
+        "group": "group_alerts",
+        "name": "Recent Alerts",
+        "order": 1,
+        "width": 6,
+        "height": 8,
+        "format": "<style>\n    .alert-container {\n        height: 100%;\n        overflow-y: auto;\n        background: #1a1a1a;\n        padding: 10px;\n        border-radius: 4px;\n    }\n    .alert-item {\n        background: #3a1b1b;\n        border-left: 4px solid #f44336;\n        padding: 10px;\n        margin-bottom: 8px;\n        border-radius: 4px;\n        font-size: 13px;\n    }\n    .alert-time {\n        color: #999;\n        font-size: 11px;\n    }\n    .alert-client {\n        color: #f44336;\n        font-weight: bold;\n        font-size: 14px;\n    }\n    .alert-data {\n        color: #ccc;\n        margin-top: 4px;\n        font-size: 12px;\n    }\n</style>\n\n<div class=\"alert-container\" id=\"alerts\"></div>\n\n<script>\n(function(scope) {\n    let alerts = [];\n    \n    scope.$watch('msg', function(msg) {\n        if (msg && msg.payload) {\n            const data = msg.payload;\n            const time = new Date(data.time * 1000).toLocaleTimeString();\n            \n            const alertHtml = `\n                <div class=\"alert-item\">\n                    <div class=\"alert-time\">${time}</div>\n                    <div class=\"alert-client\">⚠ ${data.client}</div>\n                    <div class=\"alert-data\">\n                        Temp: ${data.temp.toFixed(1)}°C | \n                        Humidity: ${data.humidity.toFixed(1)}% | \n                        Rate: ${data.rate}\n                    </div>\n                </div>\n            `;\n            \n            alerts.unshift(alertHtml);\n            if (alerts.length > 10) {\n                alerts = alerts.slice(0, 10);\n            }\n            \n            document.getElementById('alerts').innerHTML = alerts.join('');\n        }\n    });\n})(scope);\n</script>",
+        "storeOutMessages": false,
+        "fwdInMessages": false,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 1020,
+        "y": 640,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c788d88e1b8a2a55",
+        "type": "ui_template",
+        "z": "1e491814b204b30f",
+        "group": "group_threats",
+        "name": "Top Threats",
+        "order": 1,
+        "width": 6,
+        "height": 6,
+        "format": "<style>\n    .client-list {\n        background: #1a1a1a;\n        padding: 10px;\n        border-radius: 4px;\n        height: 100%;\n    }\n    .client-item {\n        background: #2a2a2a;\n        padding: 10px 12px;\n        margin-bottom: 8px;\n        border-radius: 4px;\n        display: flex;\n        justify-content: space-between;\n        align-items: center;\n    }\n    .client-name {\n        color: #fff;\n        font-weight: bold;\n        font-size: 14px;\n    }\n    .client-count {\n        color: #f44336;\n        font-size: 20px;\n        font-weight: bold;\n    }\n    .no-data {\n        color: #666;\n        text-align: center;\n        padding: 40px 20px;\n        font-size: 14px;\n    }\n</style>\n\n<div class=\"client-list\" id=\"clients\">\n    <div class=\"no-data\">Waiting for anomalies...</div>\n</div>\n\n<script>\n(function(scope) {\n    scope.$watch('msg', function(msg) {\n        if (msg && msg.payload && msg.payload.clients) {\n            const clients = msg.payload.clients;\n            \n            const sorted = Object.entries(clients)\n                .filter(([name, data]) => data.anomaly > 0)\n                .sort((a, b) => b[1].anomaly - a[1].anomaly)\n                .slice(0, 5);\n            \n            if (sorted.length === 0) {\n                document.getElementById('clients').innerHTML = '<div class=\"no-data\">No anomalies detected</div>';\n                return;\n            }\n            \n            const html = sorted.map(([name, data]) => `\n                <div class=\"client-item\">\n                    <span class=\"client-name\">${name}</span>\n                    <span class=\"client-count\">${data.anomaly}</span>\n                </div>\n            `).join('');\n            \n            document.getElementById('clients').innerHTML = html;\n        }\n    });\n})(scope);\n</script>",
+        "storeOutMessages": false,
+        "fwdInMessages": false,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 1010,
+        "y": 680,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "28c58d6b3f674f63",
+        "type": "ui_button",
+        "z": "1e491814b204b30f",
+        "name": "Reset Button",
+        "group": "group_control",
+        "order": 1,
+        "width": 3,
+        "height": 1,
+        "passthru": false,
+        "label": "RESET STATISTICS",
+        "tooltip": "Reset all counters",
+        "color": "",
+        "bgcolor": "#f44336",
+        "className": "",
+        "icon": "fa-refresh",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "reset",
+        "topicType": "str",
+        "x": 530,
+        "y": 720,
+        "wires": [
+            [
+                "823991f753ef122e"
+            ]
+        ]
+    },
+    {
+        "id": "823991f753ef122e",
+        "type": "function",
+        "z": "1e491814b204b30f",
+        "name": "Reset All Stats",
+        "func": "// Clear all stats\nflow.set('stats', {\n    total: 0,\n    normal: 0,\n    anomaly: 0,\n    clients: {}\n});\n\n// Send zeros to all widgets\nreturn [\n    { payload: 0 },                     // Total\n    { payload: 0 },                     // Normal\n    { payload: 0 },                     // Anomaly\n    { payload: 0 },                     // Rate\n    { payload: 0, topic: \"Normal\" },    // Pie\n    { payload: 0, topic: \"Anomaly\" }    // Pie\n];",
+        "outputs": 6,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 740,
+        "y": 720,
+        "wires": [
+            [
+                "d7ec02fa7eea46f2"
+            ],
+            [
+                "8ec57c2b4be89ba9"
+            ],
+            [
+                "3aa15992ad40c7a4"
+            ],
+            [
+                "123ef123d46491e6"
+            ],
+            [
+                "6ae1ac21505ca4af"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "10c26b858baee667",
+        "type": "ui_text",
+        "z": "1e491814b204b30f",
+        "group": "group_control",
+        "order": 2,
+        "width": 3,
+        "height": 1,
+        "name": "System Status",
+        "label": "System",
+        "format": "<font color='#4caf50'>● Online</font>",
+        "layout": "row-spread",
+        "className": "",
+        "x": 1020,
+        "y": 720,
+        "wires": []
+    },
+    {
+        "id": "9ad152b795fadae5",
+        "type": "http request",
+        "z": "1e491814b204b30f",
+        "name": "",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "https://discord.com/api/webhooks/1472607110029119549/LOqzgC6ImWjros1kmE881Wod_EMHs-Lq0KdcuOSnt734_NE78ut85gYcwPIOb208kMMa",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 890,
+        "y": 880,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "78e5bbb983ee2d6f",
+        "type": "function",
+        "z": "1e491814b204b30f",
+        "name": "function 1",
+        "func": "const d = msg.payload;\nif (!msg.payload || msg.payload.status !== 'anomaly') {\n    return null;\n}\n// สร้างข้อความแจ้งเตือน\n    msg.payload = {\n        embeds: [{\n        title: \"🚨 Anomaly Detected\",\n        color: 15158332, // แดง\n        fields: [\n            { name: \"Client\", value: d.client || \"unknown\", inline: true },\n            { name: \"Temperature\", value: d.temp.toFixed(1) + \" °C\", inline: true },\n            { name: \"Humidity\", value: d.humidity.toFixed(1) , inline: true },\n            { name: \"Message Rate\", value: d.rate, inline: true },\n            { name: \"Status\", value: d.status || \"unknown\", inline: true }\n        ],\n        footer: {\n            text: \"Node-RED IoT Security Monitor\"\n        },\n        timestamp: new Date().toISOString()\n        }]\n    };\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 880,
+        "wires": [
+            [
+                "9ad152b795fadae5"
+            ]
+        ]
+    },
+    {
+        "id": "local_broker",
+        "type": "mqtt-broker",
+        "name": "Local Mosquitto",
+        "broker": "localhost",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true
+    },
+    {
+        "id": "group_stats",
+        "type": "ui_group",
+        "name": "Statistics",
+        "tab": "tab_main",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "group_analysis",
+        "type": "ui_group",
+        "name": "Analysis",
+        "tab": "tab_main",
+        "order": 2,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "group_alerts",
+        "type": "ui_group",
+        "name": "Recent Alerts",
+        "tab": "tab_main",
+        "order": 3,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "group_threats",
+        "type": "ui_group",
+        "name": "Top Threats",
+        "tab": "tab_main",
+        "order": 4,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "group_control",
+        "type": "ui_group",
+        "name": "Control",
+        "tab": "tab_main",
+        "order": 5,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "tab_main",
+        "type": "ui_tab",
+        "name": "IoT Security Monitor",
+        "icon": "security",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "722355047afabf44",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-dashboard": "3.6.6"
+        }
+    }
+]
