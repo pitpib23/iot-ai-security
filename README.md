@@ -108,7 +108,7 @@ iot-security-anomaly-detection/
 ## Dashboard Preview
 
 ### Live Monitoring Dashboard
-![IoT Security Monitor Dashboard](images/dashboard-detailed.png)
+![IoT Security Monitor Dashboard](images/node-red_dashboard.png)
 
 **Dashboard Components:**
 - **Statistics Panel** (Left): Total: 1096 | Normal: 737 ✅ | Anomaly: 359 ⚠️
@@ -125,7 +125,7 @@ iot-security-anomaly-detection/
 - **Control Panel**: RESET STATISTICS button, System: Online indicator
 
 ### Node-RED Architecture
-![Node-RED Flow Diagram](images/node-red-flow-detailed.png)
+![Node-RED Flow Diagram](images/node-red_flow.png)
 
 **Flow Architecture:**
 - **Security Feed** (Input): MQTT messages from security/alert topic
