@@ -189,7 +189,7 @@ chmod -R 755 model/
 
 This project teaches:
 - MQTT protocol (IoT messaging)
-- Machine Learning basics (anomaly detection)
+- Machine Learning basics (isolation forest)
 - Real-time data processing
 - Dashboard visualization
 
@@ -238,7 +238,7 @@ Dashboard shows:
 
 **MQTT**: Simple messaging protocol used for IoT
 
-**One-Class SVM**: ML algorithm that learns normal patterns
+**Isolation Forest**: an unsupervised machine learning algorithm designed specifically for anomaly detection (outlier detection) in datasets
 
 **Real-time**: Data is processed instantly as it arrives
 
@@ -260,5 +260,3 @@ Dashboard shows:
 ## That's It!
 
 This is a simple learning project to understand IoT security monitoring. Feel free to modify, experiment, and learn! 
-
-Questions? Check the code comments or try running it!
