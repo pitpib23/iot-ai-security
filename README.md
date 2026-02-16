@@ -21,7 +21,7 @@ A simple IoT security monitoring project that detects attacks using Machine Lear
 ### ✅ AI: anomaly detection + pipeline data → model → inference
 **What we built:**
 - Data preparation: Generated 10,000 training samples (prepare_dataset.ipynb)
-- Model training: One-Class SVM trained and serialized (train_model.ipynb)
+- Model training: Isolation Forest trained and exported (train_model.ipynb)
 - Real-time inference: prediction.py classifies normal vs attack (0/1)
 - Full pipeline: Data → Feature Engineering → Model → Live Predictions
 
@@ -164,7 +164,7 @@ Saves all messages to CSV file
 
 ### prediction.py
 Uses machine learning to check if data is normal or attack
-- Uses One-Class SVM model
+- Uses Isolation Forest model
 - Returns 0 = normal, 1 = attack
 
 ### security_monitor.py
@@ -430,7 +430,7 @@ Manual alerts          →  Auto email/SMS/webhook
 In-memory stats        →  Persistent storage
 ```
 
-### Why One-Class SVM?
+### Why Isolation Forest?
 
 **For PoC:**
 - ✅ Simple to understand and implement
@@ -439,7 +439,6 @@ In-memory stats        →  Persistent storage
 - ✅ Lightweight deployment
 
 **For Production, we would add:**
-- Ensemble methods (Random Forest, Isolation Forest)
 - Real-time model retraining
 - Multi-class classification (identify attack type)
 - Explainability (why it's flagged)
@@ -450,7 +449,7 @@ In-memory stats        →  Persistent storage
 |---------|--------|---------|
 | Real-time data collection | ✅ | MQTT streaming |
 | Data logging | ✅ | CSV audit trail |
-| ML-based detection | ✅ | One-Class SVM |
+| ML-based detection | ✅ | Isolation Forest model |
 | Threshold alerting | ✅ | Anomaly score > threshold |
 | Dashboard visualization | ✅ | Node-RED UI |
 | Alert notification | ✅ | MQTT + dashboard |
@@ -535,7 +534,7 @@ Simulator → MQTT Broker → Collector → CSV Log → Dashboard
 
 **Components:**
 - `prepare_dataset.ipynb`: Generate 10,000 training samples
-- `train_model.ipynb`: Train One-Class SVM model (92% accuracy)
+- `train_model.ipynb`: Train Isolation Forest model (92% accuracy)
 - `prediction.py`: Real-time inference engine
 
 **Pipeline:**
